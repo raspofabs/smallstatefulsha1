@@ -1,3 +1,8 @@
+Slightly improved version of smallsha1
+	https://code.google.com/p/smallsha1/
+I added a stateful object that let's me do an Init, Update, Final approach to generate the sha1.
+
+
 You only need sha1.h and sha1.cpp when including this in your own project.
 main.cpp and 1000sha1.txt is only used for unittesting and benchmarking.
 
