@@ -24,12 +24,14 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/* Modified by Richard fabs(); Fabian 2014 to include stateful version */
 
 /*
  Contributors:
  Gustav
  Several members in the gamedev.se forum.
  Gregory Petrosyan
+ Richard Fabian
  */
 
 #include "sha1.h"
@@ -183,3 +185,51 @@ namespace sha1
         hexstring[40] = 0;
     }
 } // namespace sha1
+
+void HeaderSHA1::Init() {
+	result[0] = 0x67452301;
+	result[1] = 0xefcdab89;
+	result[2] = 0x98badcfe;
+	result[3] = 0x10325476;
+	result[4] = 0xc3d2e1f0;
+	tpos = 0;
+	totalBytes = 0;
+}
+void HeaderSHA1::Update(const void* src, int bytelength) {
+	totalBytes += bytelength;
+	const unsigned char* tarray = (const unsigned char*) src;
+	while( bytelength-- ) {
+		sarray[tpos++] = *tarray++;
+		if( tpos == 64 ) {
+			OneRound();
+			tpos -= 64;
+		}
+	}
+}
+void HeaderSHA1::OneRound() {
+	int currentBlock = 0;
+	for (int roundPos = 0; currentBlock < 64; currentBlock += 4) {
+		w[roundPos++] = (unsigned int) sarray[currentBlock + 3]
+			| (((unsigned int) sarray[currentBlock + 2]) << 8)
+			| (((unsigned int) sarray[currentBlock + 1]) << 16)
+			| (((unsigned int) sarray[currentBlock]) << 24);
+	}
+	sha1::innerHash(result, w);
+}
+void HeaderSHA1::Final(unsigned char* hash) {
+	sha1::clearWBuffert(w);
+	int lastBlockBytes = 0;
+	for (;lastBlockBytes < tpos; ++lastBlockBytes) {
+		w[lastBlockBytes >> 2] |= (unsigned int) sarray[lastBlockBytes] << ((3 - (lastBlockBytes & 3)) << 3);
+	}
+	w[lastBlockBytes >> 2] |= 0x80 << ((3 - (lastBlockBytes & 3)) << 3);
+	if (tpos >= 56) {
+		sha1::innerHash(result, w);
+		sha1::clearWBuffert(w);
+	}
+	w[15] = totalBytes << 3;
+	sha1::innerHash(result, w);
+	for (int hashByte = 20; --hashByte >= 0;) {
+		hash[hashByte] = (result[hashByte >> 2] >> (((3 - hashByte) & 0x3) << 3)) & 0xff;
+	}
+}

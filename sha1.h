@@ -24,6 +24,7 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/* Modified by Richard fabs(); Fabian 2014 to include stateful version */
 
 #ifndef SHA1_DEFINED
 #define SHA1_DEFINED
@@ -45,5 +46,19 @@ namespace sha1
     void toHexString(const unsigned char* hash, char* hexstring);
 
 } // namespace sha1
+
+struct HeaderSHA1 {
+	void Init();
+	void Update(const void* src, int bytelength);
+	void Final(unsigned char* hash);
+
+private:
+	unsigned int w[80];
+	unsigned char sarray[64];
+	int tpos;
+	int totalBytes;
+	unsigned int result[5];
+	void OneRound();
+};
 
 #endif // SHA1_DEFINED
